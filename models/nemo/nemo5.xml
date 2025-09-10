@@ -99,10 +99,10 @@
                 <inertial pos="0.00757956 1.139e-05 -0.03942379" mass="1.5526793" fullinertia="0.00385478 0.0054167 0.00391016 5.4e-07 0.0010808 3e-07" />
                 <joint armature="0.005" damping="1" actuatorfrcrange="-23.7 23.7" name="l_foot_roll" axis="1 0 0" range="-1 1" />
                 <geom type="mesh" class="visual" mesh="l_foot_roll" name="left_foot"/>
-                <geom name="left_foot_1" class="foot_sphere" pos="0.0813 0.0505 -0.08275"/>
-                <geom name="left_foot_2" class="foot_sphere" pos="0.0813 -0.0505 -0.08275"/>
-                <geom name="left_foot_3" class="foot_sphere" pos="-0.1187 0.0505 -0.08275"/>
-                <geom name="left_foot_4" class="foot_sphere" pos="-0.1187 -0.0505 -0.08275"/>
+                <geom name="left_foot_1" class="foot_sphere" pos="0.0763 0.0455 -0.07775"/>
+                <geom name="left_foot_2" class="foot_sphere" pos="0.0763 -0.0455 -0.07775"/>
+                <geom name="left_foot_3" class="foot_sphere" pos="-0.1137 0.0455 -0.07775"/>
+                <geom name="left_foot_4" class="foot_sphere" pos="-0.1137 -0.0455 -0.07775"/>
                 <site name="left_foot" pos="0.0 0.0 -0.08275" />
               </body>
             </body>
@@ -143,10 +143,10 @@
                 <joint armature="0.005" damping="1" actuatorfrcrange="-23.7 23.7" name="r_foot_roll" axis="1 0 0" range="-1 1" />
                 <geom type="mesh" class="visual" mesh="l_foot_roll" name="right_foot"/>
                 <!--<geom class="collision" name="right_foot" pos="-0.0187 0 -0.07975" size="0.1 0.0505 0.006" type="box" />-->
-                <geom name="right_foot_1" class="foot_sphere" pos="0.0813 0.0505 -0.08275"/>
-                <geom name="right_foot_2" class="foot_sphere" pos="0.0813 -0.0505 -0.08275"/>
-                <geom name="right_foot_3" class="foot_sphere" pos="-0.1187 0.0505 -0.08275"/>
-                <geom name="right_foot_4" class="foot_sphere" pos="-0.1187 -0.0505 -0.08275"/>
+                <geom name="right_foot_1" class="foot_sphere" pos="0.0763 0.0455 -0.07775"/>
+                <geom name="right_foot_2" class="foot_sphere" pos="0.0763 -0.0455 -0.07775"/>
+                <geom name="right_foot_3" class="foot_sphere" pos="-0.1137 0.0455 -0.07775"/>
+                <geom name="right_foot_4" class="foot_sphere" pos="-0.1137 -0.0455 -0.07775"/>
                 <site name="right_foot" pos="0.0 0.0 -0.08275" />
               </body>
             </body>

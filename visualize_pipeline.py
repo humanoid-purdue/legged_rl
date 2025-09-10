@@ -60,10 +60,12 @@ for c in range(1000):
     obs_list += [state.obs]
     ctrl, _ = jit_inference_fn(state.obs, act_rng)
     state = jit_step(state, ctrl)
+    rews = env.test_rewards(state, ctrl)
     pipeline_state = state.data
     ctrl_list += [ctrl]
     states += [state]
     pipeline_state_list += [pipeline_state]
+    print(rews)
 
 
 print("Rollout precomputed")

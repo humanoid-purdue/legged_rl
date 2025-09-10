@@ -65,7 +65,7 @@ def default_config() -> config_dict.ConfigDict:
               torques=0.0,
               action_rate=-0.005,
               energy=0.0,
-              dof_acc=0.0,
+              dof_acc=-1e-6,
               dof_vel=0.0,
               # Feet related rewards.
               feet_clearance=0.0,
@@ -327,6 +327,21 @@ class Joystick(base.NEMOEnv):
     obs = self._get_obs(data, info, contact)
     reward, done = jp.zeros(2)
     return mjx_env.State(data, obs, reward, done, metrics, info)
+  
+  def test_rewards(self, state, action):
+    data = state.data
+    contact = get_contacts(data.contact, self.ids)
+    contact_filt = contact | state.info["last_contact"]
+    first_contact = (state.info["feet_air_time"] > 0.0) * contact_filt
+
+    obs = self._get_obs(data, state.info, contact)
+    done = self._get_termination(data)
+
+    rewards = self._get_reward(
+        data, action, state.info, state.metrics, done, first_contact, contact
+    )
+
+    return rewards
 
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
     state.info["rng"], push1_rng, push2_rng = jax.random.split(
