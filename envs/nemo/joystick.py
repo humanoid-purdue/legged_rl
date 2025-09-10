@@ -65,7 +65,7 @@ def default_config() -> config_dict.ConfigDict:
               torques=0.0,
               action_rate=-0.005,
               energy=0.0,
-              dof_acc=-1e-6,
+              dof_acc=-1e-7,
               dof_vel=0.0,
               # Feet related rewards.
               feet_clearance=0.0,
