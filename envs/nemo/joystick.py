@@ -38,7 +38,7 @@ def default_config() -> config_dict.ConfigDict:
       sim_dt=0.001,
       episode_length=episode_length,
       action_repeat=1,
-      action_scale=1.5,
+      action_scale=1.0,
       history_len=1,
       soft_joint_pos_limit_factor=0.95,
       noise_config=config_dict.create(
@@ -124,8 +124,8 @@ rl_config = config_dict.create(
           value_hidden_layer_sizes=(512, 256, 256, 128),
           policy_obs_key="state",
           value_obs_key="privileged_state",
-          distribution_type = "tanh_normal",
-          noise_std_type = "log"
+          #distribution_type = "tanh_normal",
+          #noise_std_type = "log"
       ),
       num_resets_per_eval=1,
   )
