@@ -30,7 +30,7 @@ from envs.nemo.base import step
 from helpers.mjx_col import get_contacts
 from models.nemo import constants as consts
 
-episode_length = 1000
+episode_length = 500
 
 def default_config() -> config_dict.ConfigDict:
   return config_dict.create(
@@ -124,8 +124,8 @@ rl_config = config_dict.create(
           value_hidden_layer_sizes=(512, 256, 256, 128),
           policy_obs_key="state",
           value_obs_key="privileged_state",
-          distribution_type = "normal",
-          noise_std_type = "scalar"
+          distribution_type = "tanh",
+          noise_std_type = "log"
       ),
       num_resets_per_eval=1,
   )
