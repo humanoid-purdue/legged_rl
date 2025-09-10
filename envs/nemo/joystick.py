@@ -124,7 +124,7 @@ rl_config = config_dict.create(
           value_hidden_layer_sizes=(512, 256, 256, 128),
           policy_obs_key="state",
           value_obs_key="privileged_state",
-          distribution_type = "tanh",
+          distribution_type = "tanh_normal",
           noise_std_type = "log"
       ),
       num_resets_per_eval=1,
