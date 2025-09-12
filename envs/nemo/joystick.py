@@ -75,7 +75,7 @@ def default_config() -> config_dict.ConfigDict:
               feet_phase=1.0,
               # Other rewards.
               stand_still=0.0,
-              alive=0.25,
+              alive=0.40,
               termination=0.0,
               # Pose related rewards.
               joint_deviation_knee=-0.1,
