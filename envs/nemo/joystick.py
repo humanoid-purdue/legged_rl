@@ -84,6 +84,7 @@ def default_config() -> config_dict.ConfigDict:
               pose=-1.0,
               feet_distance=-1.0,
               collision=-1.0,
+              feet_contact = -0.25
           ),
           tracking_sigma=0.25,
           max_foot_height=0.10,
@@ -599,6 +600,9 @@ class Joystick(base.NEMOEnv):
         "dof_pos_limits": self._cost_joint_pos_limits(data.qpos[7:]),
         "pose": self._cost_pose(data.qpos[7:]),
         "feet_distance": self._cost_feet_distance(data, info),
+        "feet_contact": self._reward_feet_contact(
+            info["phase"], contact, self._config.reward_config.max_foot_height, info["command"]
+        ),
     }
 
   # Tracking rewards.
@@ -758,6 +762,25 @@ class Joystick(base.NEMOEnv):
     reward = jp.sum(air_time)
     reward *= cmd_norm > 0.1  # No reward for zero commands.
     return reward
+  
+  def _reward_feet_contact(
+      self,
+      phase: jax.Array,
+      contact: jax.Array,
+      foot_height: jax.Array,
+      commands: jax.Array
+  ) -> jax.Array:
+    rz = gait.get_rz(phase, swing_height=foot_height)
+    cmd_norm = jp.linalg.norm(commands)
+    rz *= cmd_norm > 0.1
+    des_contact = jp.where(rz >= 0.03, 0.0, 1.0)
+    # Error if contact is one when des_contact is zero
+    # No error if contact is zero when des_contact is one
+    # ab: 10 -> 1, 00 -> 0, 01 -> 0 -> 0
+    error = jp.sum(jp.square(contact - des_contact) * (1 - des_contact))
+
+    return error
+
 
   def _reward_feet_phase(
       self,
@@ -767,15 +790,13 @@ class Joystick(base.NEMOEnv):
       commands: jax.Array,
   ) -> jax.Array:
     # Reward for tracking the desired foot height.
-    del commands  # Unused.
     foot_pos = data.site_xpos[self._feet_site_id]
     foot_z = foot_pos[..., -1]
     rz = gait.get_rz(phase, swing_height=foot_height)
     error = jp.sum(jp.square(foot_z - rz))
     reward = jp.exp(-error / 0.01)
-    # TODO(kevin): Ensure no movement at 0 command.
-    # cmd_norm = jp.linalg.norm(commands)
-    # reward *= cmd_norm > 0.1  # No reward for zero commands.
+    cmd_norm = jp.linalg.norm(commands)
+    reward *= cmd_norm > 0.1  # No reward for zero commands.
     return reward
 
   def _cost_feet_distance(

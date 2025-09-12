@@ -6,7 +6,6 @@ import mujoco.viewer
 import jax.numpy as jnp
 import numpy as np
 from brax.training.acme import running_statistics
-#from playground.booster import joystick
 from envs.nemo import joystick
 from envs.nemo.joystick import rl_config as ppo_params
 env = joystick.Joystick()
