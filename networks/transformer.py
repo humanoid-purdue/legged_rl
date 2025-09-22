@@ -66,7 +66,7 @@ def make_policy_network(
 		)
 
 	def apply(processor_params, policy_params, obs):
-		hist_mat = obs[history_obs_key]
+		hist_mat = obs[obs_key]
 		if obs[obs_key].ndim == 1:
 			#hist_mat = jnp.concatenate([
 			#obs[obs_key][None, :], obs[history_obs_key]
