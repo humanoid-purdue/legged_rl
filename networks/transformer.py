@@ -91,11 +91,14 @@ def make_policy_network(
 		in_shape = obs_.shape
 		if len(in_shape) != 1:
 			hidden_len = in_shape[-1]
-			hist_mat = obs_.reshape(-1, max_len, int(hidden_len / max_len))
+			#hist_mat = obs_.reshape(-1, max_len, int(hidden_len / max_len))
+			new_shape = in_shape[:-1] + (max_len, int(hidden_len / max_len))
+			hist_mat = jnp.reshape(obs_, new_shape)
 		else:
 			hist_mat = obs_.reshape(max_len, -1)
 
-		return policy_module.apply(policy_params, hist_mat)
+		output =  policy_module.apply(policy_params, hist_mat)
+		return output
 
 	obs_size = _get_obs_state_size(obs_size, obs_key)
 	dummy_obs = jnp.zeros((1, obs_size))
