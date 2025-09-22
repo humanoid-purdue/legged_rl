@@ -66,12 +66,8 @@ def make_policy_network(
 		)
 
 	def apply(processor_params, policy_params, obs):
-		in_shape = obs[obs_key].shape
-		if len(in_shape) != 1:
-			hidden_len = obs[obs_key].shape[-1]
-			hist_mat = obs[obs_key].reshape(-1, max_len, int(hidden_len / max_len))
-		else:
-			hist_mat = obs[obs_key].reshape(max_len, -1)
+		
+		obs_ = obs[obs_key]
 		if isinstance(obs, Mapping):
 			#norm_params = normalizer_select(processor_params, obs_key)
 			#preprocess_batched = jax.vmap(
@@ -80,7 +76,7 @@ def make_policy_network(
             #    )
 			#obs = preprocess_batched(hist_mat)
 			obs = preprocess_observations_fn(
-                hist_mat, normalizer_select(processor_params, obs_key)
+                obs_, normalizer_select(processor_params, obs_key)
             )
 			#obs = obs[obs_key]
 		else:
@@ -89,15 +85,24 @@ def make_policy_network(
             #        in_axes=in_axes, out_axes=out_axes
             #    )
 			#obs = preprocess_batched(hist_mat)
-			obs = preprocess_observations_fn(hist_mat, processor_params)
+			obs = preprocess_observations_fn(obs_, processor_params)
 			#obs = obs[obs_key]
-		return policy_module.apply(policy_params, obs)
+
+		in_shape = obs_.shape
+		if len(in_shape) != 1:
+			hidden_len = in_shape[-1]
+			hist_mat = obs_.reshape(-1, max_len, int(hidden_len / max_len))
+		else:
+			hist_mat = obs_.reshape(max_len, -1)
+
+		return policy_module.apply(policy_params, hist_mat)
 
 	obs_size = _get_obs_state_size(obs_size, obs_key)
 	dummy_obs = jnp.zeros((1, obs_size))
 
 	def init(key):
-		policy_module_params = policy_module.init(key, dummy_obs)
+		dummy_obs_ = dummy_obs.reshape(1, max_len, -1)
+		policy_module_params = policy_module.init(key, dummy_obs_)
 		return policy_module_params
 
 	return FeedForwardNetwork(init=init, apply=apply)

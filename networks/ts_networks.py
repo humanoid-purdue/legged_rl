@@ -14,7 +14,7 @@ def make_ppo_networks(
     action_size: int,
     preprocess_observations_fn: types.PreprocessObservationFn = types.identity_observation_preprocessor,
     emb_dim = 128,
-	max_len = 1000,
+	max_len = 500,
 	num_layers = 8,
 	num_heads = 8,
 	mlp_dim = 256,
