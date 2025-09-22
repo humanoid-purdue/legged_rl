@@ -63,48 +63,37 @@ def make_policy_network(
 		raise ValueError(
 			f'Unsupported distribution type: {distribution_type}. Must be one'
 			' of "normal" or "tanh_normal".'
-		)
+			)
+
+	# Compute flat feature size per timestep statically to avoid tracer shape issues
+	flat_obs_size = _get_obs_state_size(obs_size, obs_key)
+	if flat_obs_size % max_len != 0:
+		raise ValueError(f'observation size {flat_obs_size} must be divisible by max_len={max_len}')
+	per_t_features = flat_obs_size // max_len
 
 	def apply(processor_params, policy_params, obs):
-		
+		# Select and normalize observations
 		obs_ = obs[obs_key]
 		if isinstance(obs, Mapping):
-			#norm_params = normalizer_select(processor_params, obs_key)
-			#preprocess_batched = jax.vmap(
-            #        lambda xi: preprocess_observations_fn(xi, norm_params),
-            #        in_axes=in_axes, out_axes=out_axes
-            #    )
-			#obs = preprocess_batched(hist_mat)
-			obs = preprocess_observations_fn(
+			obs_norm = preprocess_observations_fn(
                 obs_, normalizer_select(processor_params, obs_key)
             )
-			#obs = obs[obs_key]
 		else:
-			#preprocess_batched = jax.vmap(
-            #        lambda xi: preprocess_observations_fn(xi, processor_params),
-            #        in_axes=in_axes, out_axes=out_axes
-            #    )
-			#obs = preprocess_batched(hist_mat)
-			obs = preprocess_observations_fn(obs_, processor_params)
-			#obs = obs[obs_key]
+			obs_norm = preprocess_observations_fn(obs_, processor_params)
 
-		in_shape = obs_.shape
-		if len(in_shape) != 1:
-			hidden_len = in_shape[-1]
-			#hist_mat = obs_.reshape(-1, max_len, int(hidden_len / max_len))
-			new_shape = in_shape[:-1] + (max_len, int(hidden_len / max_len))
-			hist_mat = jnp.reshape(obs_, new_shape)
-		else:
-			hist_mat = obs_.reshape(max_len, -1)
+		# Reshape to (..., T, D) with only static sizes in the new shape
+		# Uses obs_norm.shape for leading batch dims (static) and computed per_t_features
+		new_shape = obs_norm.shape[:-1] + (max_len, per_t_features)
+		hist_mat = jnp.reshape(obs_norm, new_shape)
 
 		output =  policy_module.apply(policy_params, hist_mat)
 		return output
-
-	obs_size = _get_obs_state_size(obs_size, obs_key)
-	dummy_obs = jnp.zeros((1, obs_size))
+	
+	# Dummy inputs for initialization with concrete static shape
+	dummy_obs = jnp.zeros((1, flat_obs_size))
 
 	def init(key):
-		dummy_obs_ = dummy_obs.reshape(1, max_len, -1)
+		dummy_obs_ = dummy_obs.reshape(1, max_len, per_t_features)
 		policy_module_params = policy_module.init(key, dummy_obs_)
 		return policy_module_params
 
