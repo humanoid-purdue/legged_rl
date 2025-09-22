@@ -121,9 +121,14 @@ rl_config = config_dict.create(
       clipping_epsilon=0.2,
       max_grad_norm=1.0,
       network_factory=config_dict.create(
-          policy_hidden_layer_sizes=(512, 256, 256, 128),
+          emb_dim = 128,
+          max_len = 1000,
+          num_layers = 8,
+          num_heads = 8,
+          mlp_dim = 256,
           value_hidden_layer_sizes=(512, 256, 256, 128),
           policy_obs_key="state",
+          history_obs_key="history",
           value_obs_key="privileged_state",
           #distribution_type = "tanh_normal",
           #noise_std_type = "log"
@@ -327,6 +332,7 @@ class Joystick(base.NEMOEnv):
 
     obs = self._get_obs(data, info, contact)
     reward, done = jp.zeros(2)
+    self.obs_history = jp.zeros((self.history_length, self.observation_size))
     return mjx_env.State(data, obs, reward, done, metrics, info)
   
   def test_rewards(self, state, action):
@@ -442,6 +448,7 @@ class Joystick(base.NEMOEnv):
     state.metrics["swing_peak"] = jp.mean(state.info["swing_peak"])
 
     done = done.astype(reward.dtype)
+    self.push_obs(obs["state"])
     state = state.replace(data=data, obs=obs, reward=reward, done=done)
     return state
 
@@ -538,6 +545,7 @@ class Joystick(base.NEMOEnv):
     return {
         "state": state,
         "privileged_state": privileged_state,
+        "history": self.obs_history
     }
 
   def _get_reward(
