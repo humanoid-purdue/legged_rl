@@ -66,34 +66,25 @@ def make_policy_network(
 		)
 
 	def apply(processor_params, policy_params, obs):
-		hist_mat = obs[obs_key]
-		if obs[obs_key].ndim == 1:
-			#hist_mat = jnp.concatenate([
-			#obs[obs_key][None, :], obs[history_obs_key]
-            #], axis = 0)
-			in_axes = 0
-			out_axes = 0
-		else:
-			#hist_mat = jnp.concatenate([
-			#    obs[obs_key][:, None, :], obs[history_obs_key]
-            #], axis = 1)
-			in_axes = 1
-			out_axes = 1
-		
+		#hist_mat = obs[obs_key]
 		
 		if isinstance(obs, Mapping):
-			norm_params = normalizer_select(processor_params, obs_key)
-			preprocess_batched = jax.vmap(
-                    lambda xi: preprocess_observations_fn(xi, norm_params),
-                    in_axes=in_axes, out_axes=out_axes
-                )
-			obs = preprocess_batched(hist_mat)
+			#norm_params = normalizer_select(processor_params, obs_key)
+			#preprocess_batched = jax.vmap(
+            #        lambda xi: preprocess_observations_fn(xi, norm_params),
+            #        in_axes=in_axes, out_axes=out_axes
+            #    )
+			#obs = preprocess_batched(hist_mat)
+			obs = preprocess_observations_fn(
+                obs[obs_key], normalizer_select(processor_params, obs_key)
+            )
 		else:
-			preprocess_batched = jax.vmap(
-                    lambda xi: preprocess_observations_fn(xi, processor_params),
-                    in_axes=in_axes, out_axes=out_axes
-                )
-			obs = preprocess_batched(hist_mat)
+			#preprocess_batched = jax.vmap(
+            #        lambda xi: preprocess_observations_fn(xi, processor_params),
+            #        in_axes=in_axes, out_axes=out_axes
+            #    )
+			#obs = preprocess_batched(hist_mat)
+			obs = preprocess_observations_fn(obs, processor_params)
 		return policy_module.apply(policy_params, obs)
 
 	obs_size = _get_obs_state_size(obs_size, obs_key)
