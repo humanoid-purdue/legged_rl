@@ -12,17 +12,18 @@ class SinusoidalPositionalEncoding(nn.Module):
 
 	@nn.compact
 	def __call__(self, x: jnp.ndarray) -> jnp.ndarray:
-		# x: [B, T, D]
-		seq_len = x.shape[1]
-		position = jnp.arange(self.max_len, dtype=jnp.float32)[:, None]
+		# x: [..., T, D]
+		seq_len = x.shape[-2]
+		dtype = x.dtype
+		position = jnp.arange(seq_len, dtype=dtype)[:, None]
 		div_term = jnp.exp(
-			jnp.arange(0, self.features, 2, dtype=jnp.float32)
+			jnp.arange(0, self.features, 2, dtype=dtype)
 			* (-jnp.log(10000.0) / self.features)
 		)
-		pe = jnp.zeros((self.max_len, self.features), dtype=jnp.float32)
+		pe = jnp.zeros((seq_len, self.features), dtype=dtype)
 		pe = pe.at[:, 0::2].set(jnp.sin(position * div_term))
 		pe = pe.at[:, 1::2].set(jnp.cos(position * div_term))
-		pe = pe[None, :seq_len, :]  # [1, T, D]
+		# pe: [T, D] will broadcast across any leading batch dims
 		return x + pe
 
 
@@ -68,8 +69,8 @@ class EncoderBlock(nn.Module):
 class TransformerPolicy(nn.Module):
 	"""Transformer encoder policy mapping a sequence of observations to an action.
 
-	Inputs: obs_seq with shape [B, T, obs_dim]
-	Outputs: action with shape [B, action_dim]
+	Inputs: obs_seq with shape [..., T, obs_dim]
+	Outputs: action with shape [..., action_dim]
 	"""
 	obs_dim: int
 	action_dim: int
@@ -85,13 +86,16 @@ class TransformerPolicy(nn.Module):
 	@nn.compact
 	def __call__(self, obs_seq: jnp.ndarray, *, train: bool = False) -> jnp.ndarray:
 		# Project observations to embedding space
-		x = nn.Dense(self.emb_dim)(obs_seq)  # [B, T, D]
+		x = nn.Dense(self.emb_dim)(obs_seq)  # [..., T, D]
 		x = SinusoidalPositionalEncoding(max_len=self.max_len, features=self.emb_dim)(x)
 
 		if self.use_cls_token:
-			cls = self.param('cls', nn.initializers.zeros, (1, 1, self.emb_dim))
-			cls_tiled = jnp.tile(cls, (x.shape[0], 1, 1))
-			x = jnp.concatenate([cls_tiled, x], axis=1)  # [B, 1+T, D]
+			# Create a single learnable CLS token and broadcast to match batch dims
+			cls = self.param('cls', nn.initializers.zeros, (self.emb_dim,))  # [D]
+			cls = jnp.reshape(cls, (1, self.emb_dim))  # [1, D]
+			batch_shape = x.shape[:-2]
+			cls_tiled = jnp.broadcast_to(cls, batch_shape + (1, self.emb_dim))  # [..., 1, D]
+			x = jnp.concatenate([cls_tiled, x], axis=-2)  # [..., 1+T, D]
 
 		for _ in range(self.num_layers):
 			x = EncoderBlock(
@@ -103,9 +107,9 @@ class TransformerPolicy(nn.Module):
 
 		# Pooling to fixed-size representation
 		if self.use_cls_token:
-			h = x[:, 0]  # [B, D]
+			h = x[..., 0, :]  # [..., D]
 		else:
-			h = jnp.mean(x, axis=1)  # [B, D]
+			h = jnp.mean(x, axis=-2)  # [..., D]
 
 		h = nn.LayerNorm()(h)
 		action = nn.Dense(self.action_dim, kernel_init = self.kernel_init)(h)
@@ -114,8 +118,8 @@ class TransformerPolicy(nn.Module):
 class TransformerPolicyModuleWithStd(nn.Module):
 	"""Transformer encoder policy mapping a sequence of observations to an action.
 
-	Inputs: obs_seq with shape [B, T, obs_dim]
-	Outputs: action with shape [B, action_dim]
+	Inputs: obs_seq with shape [..., T, obs_dim]
+	Outputs: action with shape [..., action_dim]
 	"""
 	obs_dim: int
 	action_dim: int
@@ -134,13 +138,15 @@ class TransformerPolicyModuleWithStd(nn.Module):
 	@nn.compact
 	def __call__(self, obs_seq: jnp.ndarray, *, train: bool = False) -> jnp.ndarray:
 		# Project observations to embedding space
-		x = nn.Dense(self.emb_dim)(obs_seq)  # [B, T, D]
+		x = nn.Dense(self.emb_dim)(obs_seq)  # [..., T, D]
 		x = SinusoidalPositionalEncoding(max_len=self.max_len, features=self.emb_dim)(x)
 
 		if self.use_cls_token:
-			cls = self.param('cls', nn.initializers.zeros, (1, 1, self.emb_dim))
-			cls_tiled = jnp.tile(cls, (x.shape[0], 1, 1))
-			x = jnp.concatenate([cls_tiled, x], axis=1)  # [B, 1+T, D]
+			cls = self.param('cls', nn.initializers.zeros, (self.emb_dim,))  # [D]
+			cls = jnp.reshape(cls, (1, self.emb_dim))  # [1, D]
+			batch_shape = x.shape[:-2]
+			cls_tiled = jnp.broadcast_to(cls, batch_shape + (1, self.emb_dim))  # [..., 1, D]
+			x = jnp.concatenate([cls_tiled, x], axis=-2)  # [..., 1+T, D]
 
 		for _ in range(self.num_layers):
 			x = EncoderBlock(
@@ -152,15 +158,14 @@ class TransformerPolicyModuleWithStd(nn.Module):
 
 		# Pooling to fixed-size representation
 		if self.use_cls_token:
-			h = x[:, 0]  # [B, D]
+			h = x[..., 0, :]  # [..., D]
 		else:
-			h = jnp.mean(x, axis=1)  # [B, D]
+			h = jnp.mean(x, axis=-2)  # [..., D]
 
 		h = nn.LayerNorm()(h)
 		mean_params = nn.Dense(self.action_dim, kernel_init=self.kernel_init)(h)
 		if self.state_dependent_std:
-			log_std_output = nn.Dense(
-				self.param_size, kernel_init=self.kernel_init)(h)
+			log_std_output = nn.Dense(self.action_dim, kernel_init=self.kernel_init)(h)
 			if self.noise_std_type == 'log':
 				std_params = jnp.exp(log_std_output)
 			else:
@@ -168,10 +173,10 @@ class TransformerPolicyModuleWithStd(nn.Module):
 		else:
 			if self.noise_std_type == 'scalar':
 				std_module = Param(
-					self.init_noise_std, size=self.param_size, name='std_param')
+					self.init_noise_std, size=self.action_dim, name='std_param')
 			else:
 				std_module = LogParam(
-                    self.init_noise_std, size=self.param_size, name='std_logparam'
+                    self.init_noise_std, size=self.action_dim, name='std_logparam'
                 )
 			std_params = std_module()
 		return mean_params, jnp.broadcast_to(std_params, mean_params.shape)
