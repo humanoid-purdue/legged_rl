@@ -545,7 +545,7 @@ class Joystick(base.NEMOEnv):
     return {
         "state": state,
         "privileged_state": privileged_state,
-        "history": self.obs_history
+        "history": self.obs_history.reshape(-1)
     }
 
   def _get_reward(
