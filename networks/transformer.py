@@ -21,7 +21,7 @@ def make_policy_network(
 	obs_size: types.ObservationSize,
 	preprocess_observations_fn: types.PreprocessObservationFn = types.identity_observation_preprocessor,
 	emb_dim = 128,
-	max_len = 1000,
+	max_len = 500,
 	num_layers = 8,
 	num_heads = 8,
 	mlp_dim = 256,
@@ -66,16 +66,17 @@ def make_policy_network(
 		)
 
 	def apply(processor_params, policy_params, obs):
+		hist_mat = obs[history_obs_key]
 		if obs[obs_key].ndim == 1:
-			hist_mat = jnp.concatenate([
-			obs[obs_key][None, :], obs[history_obs_key]
-            ], axis = 0)
+			#hist_mat = jnp.concatenate([
+			#obs[obs_key][None, :], obs[history_obs_key]
+            #], axis = 0)
 			in_axes = 0
 			out_axes = 0
 		else:
-			hist_mat = jnp.concatenate([
-			    obs[obs_key][:, None, :], obs[history_obs_key]
-            ], axis = 1)
+			#hist_mat = jnp.concatenate([
+			#    obs[obs_key][:, None, :], obs[history_obs_key]
+            #], axis = 1)
 			in_axes = 1
 			out_axes = 1
 		
