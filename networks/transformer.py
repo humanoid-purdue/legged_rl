@@ -66,9 +66,12 @@ def make_policy_network(
 		)
 
 	def apply(processor_params, policy_params, obs):
-		bs = obs.shape[0]
-		hist_mat = obs[obs_key].reshape(bs, max_len, -1)
-		
+		in_shape = obs[obs_key].shape
+		if len(in_shape) != 1:
+			hidden_len = obs[obs_key].shape[-1]
+			hist_mat = obs[obs_key].reshape(-1, max_len, int(hidden_len / max_len))
+		else:
+			hist_mat = obs[obs_key].reshape(max_len, -1)
 		if isinstance(obs, Mapping):
 			#norm_params = normalizer_select(processor_params, obs_key)
 			#preprocess_batched = jax.vmap(
