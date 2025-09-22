@@ -128,7 +128,7 @@ class TransformerPolicyModuleWithStd(nn.Module):
 	init_noise_std: float = 1.0
 	state_dependent_std: bool = False
 	dropout_rate: float = 0.0
-	kernel_init: jax.nn.initializers.Initializer
+	kernel_init: jax.nn.initializers.Initializer = jax.nn.initializers.lecun_uniform()
 	use_cls_token: bool = True
 
 	@nn.compact

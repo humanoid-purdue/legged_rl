@@ -11,7 +11,7 @@ from flax import linen as nn
 import jax
 import jax.numpy as jnp
 from brax.training.networks import FeedForwardNetwork, normalizer_select, _get_obs_state_size
-from transformer_policy import TransformerPolicy, TransformerPolicyModuleWithStd
+from networks.transformer_policy import TransformerPolicy, TransformerPolicyModuleWithStd
 
 ActivationFn = Callable[[jnp.ndarray], jnp.ndarray]
 Initializer = Callable[..., Any]
@@ -27,7 +27,7 @@ def make_policy_network(
 	mlp_dim = 256,
 	kernel_init: Initializer = jax.nn.initializers.lecun_uniform(),
 	obs_key: str = 'state',
-	history_key: str = 'history',
+	history_obs_key: str = 'history',
 	distribution_type: Literal['normal', 'tanh_normal'] = 'tanh_normal',
 	noise_std_type: Literal['scalar', 'log'] = 'scalar',
 	init_noise_std: float = 1.0,
@@ -68,13 +68,13 @@ def make_policy_network(
 	def apply(processor_params, policy_params, obs):
 		if obs[obs_key].ndim == 1:
 			hist_mat = jnp.concatenate([
-			obs[obs_key][None, :], obs[history_key]
+			obs[obs_key][None, :], obs[history_obs_key]
             ], axis = 0)
 			in_axes = 0
 			out_axes = 0
 		else:
 			hist_mat = jnp.concatenate([
-			    obs[obs_key][:, None, :], obs[history_key]
+			    obs[obs_key][:, None, :], obs[history_obs_key]
             ], axis = 1)
 			in_axes = 1
 			out_axes = 1
