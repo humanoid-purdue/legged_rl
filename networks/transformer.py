@@ -75,16 +75,18 @@ def make_policy_network(
             #        in_axes=in_axes, out_axes=out_axes
             #    )
 			#obs = preprocess_batched(hist_mat)
-			obs = preprocess_observations_fn(
-                obs[obs_key], normalizer_select(processor_params, obs_key)
-            )
+			#obs = preprocess_observations_fn(
+            #    obs[obs_key], normalizer_select(processor_params, obs_key)
+            #)
+			obs = obs[obs_key]
 		else:
 			#preprocess_batched = jax.vmap(
             #        lambda xi: preprocess_observations_fn(xi, processor_params),
             #        in_axes=in_axes, out_axes=out_axes
             #    )
 			#obs = preprocess_batched(hist_mat)
-			obs = preprocess_observations_fn(obs, processor_params)
+			#obs = preprocess_observations_fn(obs, processor_params)
+			obs = obs[obs_key]
 		return policy_module.apply(policy_params, obs)
 
 	obs_size = _get_obs_state_size(obs_size, obs_key)
