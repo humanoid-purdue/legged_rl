@@ -112,7 +112,11 @@ class TransformerPolicy(nn.Module):
 			h = jnp.mean(x, axis=-2)  # [..., D]
 
 		h = nn.LayerNorm()(h)
-		action = nn.Dense(self.action_dim, kernel_init = self.kernel_init)(h)
+		y = nn.Dense(self.mlp_dim, kernel_init = self.kernel_init)(h)
+		y = nn.gelu(y)
+		y = nn.Dense(self.mlp_dim, kernel_init = self.kernel_init)(y)
+		y = nn.gelu(y)
+		action = nn.Dense(self.action_dim, kernel_init = self.kernel_init)(y)
 		return action
 
 class TransformerPolicyModuleWithStd(nn.Module):
