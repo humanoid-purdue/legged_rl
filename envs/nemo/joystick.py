@@ -535,10 +535,10 @@ class Joystick(base.NEMOEnv):
         info["feet_air_time"],  # 2
     ])
 
-    new_state = self.push_obs(state)
+    self.push_obs(state)
 
     return {
-        "state": new_state.flatten(),
+        "state": self.obs_history.flatten(),
         "privileged_state": privileged_state,
     }
 
