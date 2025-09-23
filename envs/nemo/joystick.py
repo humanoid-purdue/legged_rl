@@ -32,6 +32,8 @@ from models.nemo import constants as consts
 
 episode_length = 500
 
+MAX_LEN = 64
+
 def default_config() -> config_dict.ConfigDict:
   return config_dict.create(
       ctrl_dt=0.02,
@@ -116,15 +118,15 @@ rl_config = config_dict.create(
       discounting=0.97,
       learning_rate=3e-4,
       entropy_cost=0.005,
-      num_envs=2048,
+      num_envs=8192,
       batch_size=256,
       clipping_epsilon=0.2,
       max_grad_norm=1.0,
       network_factory=config_dict.create(
-          emb_dim = 256,
-          max_len = 128,
+          emb_dim = 64,
+          max_len = MAX_LEN,
           num_layers = 2,
-          num_heads = 8,
+          num_heads = 4,
           mlp_dim = 256,
           value_hidden_layer_sizes=(512, 256, 256, 128),
           policy_obs_key="history",
@@ -408,7 +410,7 @@ class Joystick(base.NEMOEnv):
     obs = self._get_obs(data, state.info, contact)
     new_hist = self.push_obs(state.info["obs_hist"], obs["state"])
     state.info["obs_hist"] = new_hist
-    obs["history"] = new_hist.flatten()
+    obs["history"] = new_hist[jp.arange(0, 4 * MAX_LEN, 4), :].flatten()
     done = self._get_termination(data)
 
     rewards = self._get_reward(
@@ -544,7 +546,7 @@ class Joystick(base.NEMOEnv):
     ])
 
     return {
-        "history": info["obs_hist"].flatten(),
+        "history": info["obs_hist"][jp.arange(0, 4 * MAX_LEN, 4), :].flatten(),
         "state": state,
         "privileged_state": privileged_state,
     }
