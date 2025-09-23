@@ -50,17 +50,30 @@ def make_ppo_networks(
         f'Unsupported distribution type: {distribution_type}. Must be one'
         ' of "normal" or "tanh_normal".'
     )
-  policy_network = make_policy_network(
+  #policy_network = make_policy_network(
+  #    parametric_action_distribution.param_size,
+  #    observation_size,
+  #    preprocess_observations_fn=preprocess_observations_fn,
+  #    emb_dim = emb_dim,
+  #    max_len = max_len,
+  #    num_layers = num_layers,
+  #    num_heads = num_heads,
+  #    mlp_dim = mlp_dim,
+  #    obs_key=policy_obs_key,
+  #    history_obs_key=history_obs_key,
+  #    distribution_type=distribution_type,
+  #    noise_std_type=noise_std_type,
+  #    init_noise_std=init_noise_std,
+  #    state_dependent_std=state_dependent_std,
+  #    kernel_init=policy_network_kernel_init_fn(**policy_kernel_init_kwargs),
+  #)
+  policy_network = networks.make_policy_network(
       parametric_action_distribution.param_size,
       observation_size,
       preprocess_observations_fn=preprocess_observations_fn,
-      emb_dim = emb_dim,
-      max_len = max_len,
-      num_layers = num_layers,
-      num_heads = num_heads,
-      mlp_dim = mlp_dim,
+      hidden_layer_sizes=(256,) * 5,
+      activation=activation,
       obs_key=policy_obs_key,
-      history_obs_key=history_obs_key,
       distribution_type=distribution_type,
       noise_std_type=noise_std_type,
       init_noise_std=init_noise_std,
