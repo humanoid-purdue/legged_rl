@@ -5,8 +5,9 @@ from envs.nemo.randomize import domain_randomize
 from datetime import datetime
 import functools
 import matplotlib.pyplot as plt
-from networks.ts_networks import make_ppo_networks
+#from networks.ts_networks import make_ppo_networks
 from brax.training.agents.ppo import train as ppo
+from brax.training.agents.ppo.networks import make_ppo_networks
 from mujoco_playground import wrapper
 
 def make_trainfn():
