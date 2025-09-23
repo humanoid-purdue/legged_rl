@@ -333,6 +333,7 @@ class Joystick(base.NEMOEnv):
     obs = self._get_obs(data, info, contact)
     reward, done = jp.zeros(2)
     self.obs_history = jp.zeros((self.history_length, self.observation_size))
+    obs["history"] = self.obs_history.flatten()
     return mjx_env.State(data, obs, reward, done, metrics, info)
   
   def test_rewards(self, state, action):
@@ -405,8 +406,10 @@ class Joystick(base.NEMOEnv):
     p_f = data.site_xpos[self._feet_site_id]
     p_fz = p_f[..., -1]
     state.info["swing_peak"] = jp.maximum(state.info["swing_peak"], p_fz)
-
+    
     obs = self._get_obs(data, state.info, contact)
+    self.push_obs(obs["state"])
+    obs["history"] = self.obs_history.flatten()
     done = self._get_termination(data)
 
     rewards = self._get_reward(
@@ -448,7 +451,7 @@ class Joystick(base.NEMOEnv):
     state.metrics["swing_peak"] = jp.mean(state.info["swing_peak"])
 
     done = done.astype(reward.dtype)
-    self.push_obs(obs["state"])
+    
     state = state.replace(data=data, obs=obs, reward=reward, done=done)
     return state
 

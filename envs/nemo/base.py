@@ -158,4 +158,4 @@ class NEMOEnv(mjx_env.MjxEnv):
   
   def push_obs(self, new_obs: jax.Array) -> None:
     self.obs_history = jnp.roll(self.obs_history, shift=1, axis=0)
-    self.obs_history = self.obs_history.at[0].set(new_obs)
+    self.obs_history = self.obs_history.at[0, :].set(new_obs)
