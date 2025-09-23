@@ -121,9 +121,13 @@ rl_config = config_dict.create(
       clipping_epsilon=0.2,
       max_grad_norm=1.0,
       network_factory=config_dict.create(
-          policy_hidden_layer_sizes=(512, 256, 256, 128),
+          emb_dim = 128,
+          max_len = 500,
+          num_layers = 8,
+          num_heads = 8,
+          mlp_dim = 256,
           value_hidden_layer_sizes=(512, 256, 256, 128),
-          policy_obs_key="state",
+          policy_obs_key="history",
           value_obs_key="privileged_state",
           #distribution_type = "tanh_normal",
           #noise_std_type = "log"
@@ -307,6 +311,7 @@ class Joystick(base.NEMOEnv):
         "push_interval_steps": push_interval_steps,
         "filtered_linvel": jp.zeros(3),
         "filtered_angvel": jp.zeros(3),
+        "obs_hist": jp.zeros((self.history_length, self.observation_size)),
     }
 
     metrics = {}
@@ -401,6 +406,9 @@ class Joystick(base.NEMOEnv):
     state.info["swing_peak"] = jp.maximum(state.info["swing_peak"], p_fz)
 
     obs = self._get_obs(data, state.info, contact)
+    new_hist = self.push_obs(state.info["obs_hist"], obs["state"])
+    state.info["obs_hist"] = new_hist
+    obs["history"] = new_hist.flatten()
     done = self._get_termination(data)
 
     rewards = self._get_reward(
@@ -535,10 +543,9 @@ class Joystick(base.NEMOEnv):
         info["feet_air_time"],  # 2
     ])
 
-    self.push_obs(state)
-
     return {
-        "state": self.obs_history.flatten(),
+        "history": info["obs_hist"].flatten(),
+        "state": state,
         "privileged_state": privileged_state,
     }
 

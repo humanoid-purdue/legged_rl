@@ -93,7 +93,6 @@ class NEMOEnv(mjx_env.MjxEnv):
     self._xml_path = None
     self.ids = consts.ids
     self.history_length = 500
-    self.obs_history = jnp.zeros((self.history_length, self.observation_size))
 
   # Sensor readings.
 
@@ -156,6 +155,7 @@ class NEMOEnv(mjx_env.MjxEnv):
   def make_data(self, mj_model, **kwargs):
     return make_data(mj_model, **kwargs)
   
-  def push_obs(self, new_obs: jax.Array) -> None:
-    self.obs_history = jnp.roll(self.obs_history, shift=1, axis=0)
-    self.obs_history = self.obs_history.at[0, :].set(new_obs)
+  def push_obs(self, obs_history, new_obs: jax.Array) -> None:
+    obs_history = jnp.roll(obs_history, shift=1, axis=0)
+    obs_history = obs_history.at[0, :].set(new_obs)
+    return obs_history
