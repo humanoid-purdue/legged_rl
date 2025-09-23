@@ -13,7 +13,7 @@ class SinusoidalPositionalEncoding(nn.Module):
 	@nn.compact
 	def __call__(self, x: jnp.ndarray) -> jnp.ndarray:
 		# x: [..., T, D]
-		seq_len = self.max_len
+		seq_len = self.max_len + 1
 		dtype = x.dtype
 		position = jnp.arange(seq_len, dtype=dtype)[:, None]
 		div_term = jnp.exp(
@@ -87,7 +87,7 @@ class TransformerPolicy(nn.Module):
 	def __call__(self, obs_seq: jnp.ndarray, *, train: bool = False) -> jnp.ndarray:
 		# Project observations to embedding space
 		x = nn.Dense(self.emb_dim)(obs_seq)  # [..., T, D]
-		#x = SinusoidalPositionalEncoding(max_len=self.max_len, features=self.emb_dim)(x)
+		x = SinusoidalPositionalEncoding(max_len=self.max_len, features=self.emb_dim)(x)
 
 		if self.use_cls_token:
 			# Create a single learnable CLS token and broadcast to match batch dims
