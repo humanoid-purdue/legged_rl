@@ -13,7 +13,7 @@ class SinusoidalPositionalEncoding(nn.Module):
 	@nn.compact
 	def __call__(self, x: jnp.ndarray) -> jnp.ndarray:
 		# x: [..., T, D]
-		seq_len = self.max_len + 1
+		seq_len = self.max_len
 		dtype = x.dtype
 		position = jnp.arange(seq_len, dtype=dtype)[:, None]
 		div_term = jnp.exp(
