@@ -92,7 +92,7 @@ class NEMOEnv(mjx_env.MjxEnv):
     self._mjx_model = mjx.put_model(self._mj_model, impl=self._config.impl)
     self._xml_path = None
     self.ids = consts.ids
-    self.history_length = 256
+    self.history_length = 128
 
   # Sensor readings.
 
