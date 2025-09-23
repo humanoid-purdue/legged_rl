@@ -24,6 +24,7 @@ from mujoco import mjx
 
 from mujoco_playground._src import mjx_env
 from models.nemo import constants as consts
+import jax.numpy as jnp
 
 def step(
     model: mjx.Model,
@@ -91,6 +92,8 @@ class NEMOEnv(mjx_env.MjxEnv):
     self._mjx_model = mjx.put_model(self._mj_model, impl=self._config.impl)
     self._xml_path = None
     self.ids = consts.ids
+    self.history_length = 500
+    self.obs_history = jnp.zeros((self.history_length, self.observation_size))
 
   # Sensor readings.
 
@@ -146,5 +149,13 @@ class NEMOEnv(mjx_env.MjxEnv):
   def mjx_model(self) -> mjx.Model:
     return self._mjx_model
   
+  @property
+  def observation_size(self) -> int:
+    return 12 + 3 * 4 + 12 * 2 + 4
+  
   def make_data(self, mj_model, **kwargs):
     return make_data(mj_model, **kwargs)
+  
+  def push_obs(self, new_obs: jax.Array) -> None:
+    self.obs_history = jnp.roll(self.obs_history, shift=1, axis=0)
+    self.obs_history = self.obs_history.at[0, :].set(new_obs)
