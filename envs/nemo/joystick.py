@@ -622,7 +622,7 @@ class Joystick(base.NEMOEnv):
     }
   
   def _reward_feet_flat(
-      phase, cc, foot_height, commands
+      self, phase, cc, foot_height, commands
   ):
     rz = gait.get_rz(phase, swing_height=foot_height)
     cmd_norm = jp.linalg.norm(commands)
