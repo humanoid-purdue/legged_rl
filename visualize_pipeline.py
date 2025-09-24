@@ -24,7 +24,7 @@ def makeIFN():
     # normalize = running_statistics.normalize
     #normalize = lambda x, y: x
     normalize = running_statistics.normalize
-    obs_size = 52 * 64#env.observation_size
+    obs_size = 49 * 64#env.observation_size
     ppo_network = network_factory(
         obs_size, env.action_size, preprocess_observations_fn=normalize
     )
@@ -32,7 +32,7 @@ def makeIFN():
     return make_inference_fn_
 
 
-dir = "training/nemo_trans"
+dir = "training/nemo_trans2"
 
 model_path = dir + "/walk_policy"
 saved_params = model.load_params(model_path)

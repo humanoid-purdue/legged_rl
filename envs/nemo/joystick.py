@@ -51,6 +51,7 @@ def default_config() -> config_dict.ConfigDict:
               gravity=0.05,
               linvel=0.1,
               gyro=0.2,
+              accelerometer=1.0
           ),
       ),
       reward_config=config_dict.create(
@@ -347,7 +348,7 @@ class Joystick(base.NEMOEnv):
     done = self._get_termination(data)
 
     rewards = self._get_reward(
-        data, action, state.info, state.metrics, done, first_contact, contact
+        data, action, state.info, state.metrics, done, first_contact, contact, cc
     )
 
     return rewards
@@ -501,6 +502,15 @@ class Joystick(base.NEMOEnv):
         * self._config.noise_config.scales.joint_vel
     )
 
+    accelerometer = self.get_accelerometer(data)
+    info["rng"], noise_rng = jax.random.split(info["rng"])
+    noisy_accelerometer = (
+        accelerometer
+        + (2 * jax.random.uniform(noise_rng, shape=accelerometer.shape) - 1)
+        * self._config.noise_config.level
+        * self._config.noise_config.scales.accelerometer
+    )
+
     cos = jp.cos(info["phase"])
     sin = jp.sin(info["phase"])
     phase = jp.concatenate([cos, sin])
@@ -515,9 +525,10 @@ class Joystick(base.NEMOEnv):
     )
 
     state = jp.hstack([
-        noisy_linvel,  # 3
+        #noisy_linvel,  # 3
         noisy_gyro,  # 3
-        noisy_gravity,  # 3
+        noisy_accelerometer, # 3
+        #noisy_gravity,  # 3
         info["command"],  # 3
         noisy_joint_angles - self._default_pose,
         noisy_joint_vel,
@@ -525,7 +536,7 @@ class Joystick(base.NEMOEnv):
         phase,
     ])
 
-    accelerometer = self.get_accelerometer(data)
+    
     global_angvel = self.get_global_angvel(data)
     feet_vel = data.sensordata[self._foot_linvel_sensor_adr].ravel()
     root_height = data.qpos[2]
