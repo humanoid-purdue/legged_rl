@@ -8,6 +8,7 @@ import numpy as np
 from brax.training.acme import running_statistics
 from envs.nemo import joystick
 from envs.nemo.joystick import rl_config as ppo_params
+from networks.ts_networks import make_ppo_networks, make_inference_fn
 env = joystick.Joystick()
 
 jit_reset = jax.jit(env.reset)
@@ -15,24 +16,23 @@ jit_step = jax.jit(env.step)
 state = jit_reset(jax.random.PRNGKey(0))
 
 def makeIFN():
-    from brax.training.agents.ppo import networks as ppo_networks
     import functools
     network_factory = functools.partial(
-        ppo_networks.make_ppo_networks,
+        make_ppo_networks,
         **ppo_params.network_factory
     )
     # normalize = running_statistics.normalize
     #normalize = lambda x, y: x
     normalize = running_statistics.normalize
-    obs_size = env.observation_size
+    obs_size = 52 * 64#env.observation_size
     ppo_network = network_factory(
         obs_size, env.action_size, preprocess_observations_fn=normalize
     )
-    make_inference_fn = ppo_networks.make_inference_fn(ppo_network)
-    return make_inference_fn
+    make_inference_fn_ = make_inference_fn(ppo_network)
+    return make_inference_fn_
 
 
-dir = "training/nemo_heavy"
+dir = "training/nemo_trans"
 
 model_path = dir + "/walk_policy"
 saved_params = model.load_params(model_path)

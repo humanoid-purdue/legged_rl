@@ -21,7 +21,8 @@ def get_contacts(contact, ids):
         for id in ids["col"]["right_foot"]])
     
     contact = jnp.array([jnp.any(left_foot), jnp.any(right_foot)])
-    return contact
+    contact_counts = jnp.array([jnp.sum(left_foot), jnp.sum(right_foot)])
+    return contact, contact_counts
 
 def get_collision_info(
     contact: Any, geom1: int, geom2: int

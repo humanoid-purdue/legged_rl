@@ -87,6 +87,7 @@ def default_config() -> config_dict.ConfigDict:
               feet_distance=-1.0,
               collision=-1.0,
               feet_contact = -0.25
+              feet_flat = 0.10
           ),
           tracking_sigma=0.25,
           max_foot_height=0.10,
@@ -127,7 +128,7 @@ rl_config = config_dict.create(
           max_len = MAX_LEN,
           num_layers = 1,
           num_heads = 4,
-          mlp_dim = 256,
+          mlp_dim = 512,
           value_hidden_layer_sizes=(512, 256, 256, 128),
           policy_obs_key="history",
           value_obs_key="privileged_state",
@@ -330,7 +331,7 @@ class Joystick(base.NEMOEnv):
         for sensorid in self._right_foot_floor_found_sensor
     ])
     #contact = jp.hstack([jp.any(left_feet_contact), jp.any(right_feet_contact)])
-    contact = get_contacts(data.contact, self.ids)
+    contact, cc = get_contacts(data.contact, self.ids)
 
     obs = self._get_obs(data, info, contact)
     reward, done = jp.zeros(2)
@@ -338,7 +339,7 @@ class Joystick(base.NEMOEnv):
   
   def test_rewards(self, state, action):
     data = state.data
-    contact = get_contacts(data.contact, self.ids)
+    contact, cc = get_contacts(data.contact, self.ids)
     contact_filt = contact | state.info["last_contact"]
     first_contact = (state.info["feet_air_time"] > 0.0) * contact_filt
 
@@ -398,7 +399,7 @@ class Joystick(base.NEMOEnv):
         for sensor_id in self._right_foot_floor_found_sensor
     ])
     #contact = jp.hstack([jp.any(left_feet_contact), jp.any(right_feet_contact)])
-    contact = get_contacts(data.contact, self.ids)
+    contact, cc = get_contacts(data.contact, self.ids)
 
     contact_filt = contact | state.info["last_contact"]
     first_contact = (state.info["feet_air_time"] > 0.0) * contact_filt
@@ -410,11 +411,11 @@ class Joystick(base.NEMOEnv):
     obs = self._get_obs(data, state.info, contact)
     new_hist = self.push_obs(state.info["obs_hist"], obs["state"])
     state.info["obs_hist"] = new_hist
-    obs["history"] = new_hist[jp.arange(0, 4 * MAX_LEN, 4), :].flatten()
+    obs["history"] = new_hist[jp.arange(0, 2 * MAX_LEN, 2), :].flatten()
     done = self._get_termination(data)
 
     rewards = self._get_reward(
-        data, action, state.info, state.metrics, done, first_contact, contact
+        data, action, state.info, state.metrics, done, first_contact, contact, cc
     )
     rewards = {
         k: v * self._config.reward_config.scales[k] for k, v in rewards.items()
@@ -560,6 +561,7 @@ class Joystick(base.NEMOEnv):
       done: jax.Array,
       first_contact: jax.Array,
       contact: jax.Array,
+      cc: jax.Array,
   ) -> dict[str, jax.Array]:
     del metrics  # Unused.
     return {
@@ -614,7 +616,20 @@ class Joystick(base.NEMOEnv):
         "feet_contact": self._reward_feet_contact(
             info["phase"], contact, self._config.reward_config.max_foot_height, info["command"]
         ),
+        "feet_flat": self._reward_feet_flat(
+            info["phase"], cc, self._config.reward_config.max_foot_height, info["command"]
+        ),
     }
+  
+  def _reward_feet_flat(
+      phase, cc, foot_height, commands
+  ):
+    rz = gait.get_rz(phase, swing_height=foot_height)
+    cmd_norm = jp.linalg.norm(commands)
+    rz *= cmd_norm > 0.1
+    des_contact = jp.where(rz >= 0.03, 0.0, 1.0)
+    rew = jp.sum(cc * des_contact)
+    return rew 
 
   # Tracking rewards.
 

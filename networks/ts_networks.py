@@ -81,3 +81,38 @@ def make_ppo_networks(
       value_network=value_network,
       parametric_action_distribution=parametric_action_distribution,
   )
+
+
+
+def make_inference_fn(ppo_networks: PPONetworks):
+  """Creates params and inference function for the PPO agent."""
+
+  def make_policy(
+      params: types.Params, deterministic: bool = False
+  ) -> types.Policy:
+    policy_network = ppo_networks.policy_network
+    parametric_action_distribution = ppo_networks.parametric_action_distribution
+
+    def policy(
+        observations: types.Observation, key_sample: PRNGKey
+    ) -> Tuple[types.Action, types.Extra]:
+      param_subset = (params[0], params[1])  # normalizer and policy params
+      logits = policy_network.apply(*param_subset, observations)
+      if deterministic:
+        return ppo_networks.parametric_action_distribution.mode(logits), {}
+      raw_actions = parametric_action_distribution.sample_no_postprocessing(
+          logits, key_sample
+      )
+      log_prob = parametric_action_distribution.log_prob(logits, raw_actions)
+      postprocessed_actions = parametric_action_distribution.postprocess(
+          raw_actions
+      )
+      return postprocessed_actions, {
+          'log_prob': log_prob,
+          'raw_action': raw_actions,
+          'distribution_params': logits,
+      }
+
+    return policy
+
+  return make_policy
