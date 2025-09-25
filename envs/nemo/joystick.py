@@ -413,7 +413,7 @@ class Joystick(base.NEMOEnv):
     obs = self._get_obs(data, state.info, contact)
     new_hist = self.push_obs(state.info["obs_hist"], obs["state"])
     state.info["obs_hist"] = new_hist
-    obs["history"] = new_hist[jp.arange(0, 2 * MAX_LEN, 1), :].flatten()
+    obs["history"] = new_hist[jp.arange(0, MAX_LEN, 1), :].flatten()
     done = self._get_termination(data)
 
     rewards = self._get_reward(
