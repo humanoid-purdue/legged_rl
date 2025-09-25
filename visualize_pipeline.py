@@ -32,7 +32,7 @@ def makeIFN():
     return make_inference_fn_
 
 
-dir = "training/nemo_trans2"
+dir = "training/nemo_trans3"
 
 model_path = dir + "/walk_policy"
 saved_params = model.load_params(model_path)

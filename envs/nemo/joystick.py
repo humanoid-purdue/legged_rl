@@ -32,7 +32,7 @@ from models.nemo import constants as consts
 
 episode_length = 500
 
-MAX_LEN = 64
+MAX_LEN = 100
 
 def default_config() -> config_dict.ConfigDict:
   return config_dict.create(
@@ -88,7 +88,8 @@ def default_config() -> config_dict.ConfigDict:
               feet_distance=-1.0,
               collision=-1.0,
               feet_contact = -0.25,
-              feet_flat = 0.10
+              feet_flat = 0.10,
+              feet_col = 2.0
           ),
           tracking_sigma=0.25,
           max_foot_height=0.10,
@@ -128,8 +129,8 @@ rl_config = config_dict.create(
           emb_dim = 64,
           max_len = MAX_LEN,
           num_layers = 1,
-          num_heads = 4,
-          mlp_dim = 512,
+          num_heads = 8,
+          mlp_dim = 256,
           value_hidden_layer_sizes=(512, 256, 256, 128),
           policy_obs_key="history",
           value_obs_key="privileged_state",
@@ -412,7 +413,7 @@ class Joystick(base.NEMOEnv):
     obs = self._get_obs(data, state.info, contact)
     new_hist = self.push_obs(state.info["obs_hist"], obs["state"])
     state.info["obs_hist"] = new_hist
-    obs["history"] = new_hist[jp.arange(0, 2 * MAX_LEN, 2), :].flatten()
+    obs["history"] = new_hist[jp.arange(0, 2 * MAX_LEN, 1), :].flatten()
     done = self._get_termination(data)
 
     rewards = self._get_reward(
@@ -630,6 +631,7 @@ class Joystick(base.NEMOEnv):
         "feet_flat": self._reward_feet_flat(
             info["phase"], cc, self._config.reward_config.max_foot_height, info["command"]
         ),
+        "feet_col": self._cost_feet_col(data)
     }
   
   def _reward_feet_flat(
@@ -849,6 +851,19 @@ class Joystick(base.NEMOEnv):
         - jp.sin(base_yaw) * (left_foot_pos[0] - right_foot_pos[0])
     )
     return jp.clip(0.2 - feet_distance, min=0.0, max=0.1)
+  
+  def _cost_feet_col(
+      self, data:mjx.Data
+  ):
+    lp = data.site_xpos[self._feet_site_id[0]]
+    rp = data.site_xpos[self._feet_site_id[1]]
+    foot_xy_dist = jp.linalg.norm(lp[0:2] - rp[0:2])
+    tight_cost = -1.0
+    sigma = 100.0
+    b = -0.5 / (jp.exp(-0.101 * sigma) - jp.exp(-0.2 * sigma))
+    rew_curve = b * jp.exp( -1 * sigma * foot_xy_dist) - b * jp.exp(-0.2 * sigma)
+    rew = jp.where(foot_xy_dist < 0.101, tight_cost, rew_curve)
+    rew = jp.where(foot_xy_dist < 0.2, rew, 0.0)
 
   def sample_command(self, rng: jax.Array) -> jax.Array:
     rng1, rng2, rng3, rng4 = jax.random.split(rng, 4)
