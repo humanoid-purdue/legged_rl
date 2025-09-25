@@ -864,6 +864,7 @@ class Joystick(base.NEMOEnv):
     rew_curve = b * jp.exp( -1 * sigma * foot_xy_dist) - b * jp.exp(-0.2 * sigma)
     rew = jp.where(foot_xy_dist < 0.101, tight_cost, rew_curve)
     rew = jp.where(foot_xy_dist < 0.2, rew, 0.0)
+    return rew
 
   def sample_command(self, rng: jax.Array) -> jax.Array:
     rng1, rng2, rng3, rng4 = jax.random.split(rng, 4)
