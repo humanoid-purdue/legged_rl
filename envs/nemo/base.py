@@ -150,7 +150,7 @@ class NEMOEnv(mjx_env.MjxEnv):
   
   @property
   def observation_size(self) -> int:
-    return 12 + 3 * 3 + 12 * 2 + 4
+    return 18 + 3 * 3 + 18 * 2 + 4
   
   def make_data(self, mj_model, **kwargs):
     return make_data(mj_model, **kwargs)

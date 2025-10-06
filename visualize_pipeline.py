@@ -24,15 +24,16 @@ def makeIFN():
     # normalize = running_statistics.normalize
     #normalize = lambda x, y: x
     normalize = running_statistics.normalize
-    obs_size = 49 * 64#env.observation_size
+    obs_size = 49 * 100#env.observation_size
     ppo_network = network_factory(
         obs_size, env.action_size, preprocess_observations_fn=normalize
     )
     make_inference_fn_ = make_inference_fn(ppo_network)
     return make_inference_fn_
 
+command = jnp.array([0.5, 0.0, 0.0])
 
-dir = "training/nemo_trans3"
+dir = "training/nemo_trans4"
 
 model_path = dir + "/walk_policy"
 saved_params = model.load_params(model_path)
@@ -58,13 +59,14 @@ for c in range(1000):
     act_rng, rng = jax.random.split(rng)
     obs_list += [state.obs]
     ctrl, _ = jit_inference_fn(state.obs, act_rng)
+    state.info["command"] = command
     state = jit_step(state, ctrl)
+    print("acc: ", env.get_accelerometer(state.data))
     rews = env.test_rewards(state, ctrl)
     pipeline_state = state.data
     ctrl_list += [ctrl]
     states += [state]
     pipeline_state_list += [pipeline_state]
-    print(rews)
 
 
 print("Rollout precomputed")

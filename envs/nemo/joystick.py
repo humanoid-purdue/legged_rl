@@ -69,7 +69,7 @@ def default_config() -> config_dict.ConfigDict:
               action_rate=-0.005,
               energy=0.0,
               dof_acc=-1e-7,
-              dof_vel=0.0,
+              dof_vel=-1e-6,
               # Feet related rewards.
               feet_clearance=0.0,
               feet_air_time=2.0,
@@ -190,6 +190,8 @@ class Joystick(base.NEMOEnv):
     self._weights = jp.array([
         0.01, 1.0, 1.0, 0.01, 1.0, 1.0,  # Left leg.
         0.01, 1.0, 1.0, 0.01, 1.0, 1.0,  # Right leg.
+        2.0, 2.0, 2.0, # Left arm,
+        2.0, 2.0, 2.0, # Right arm
     ])
     # fmt: on
 
