@@ -33,7 +33,8 @@ def makeIFN():
 
 command = jnp.array([0.4, 0.0, 0.2])
 
-dir = "training/nemo_full"
+#dir = "training/nemo_full"
+dir = ""
 
 model_path = dir + "/walk_policy"
 saved_params = model.load_params(model_path)
