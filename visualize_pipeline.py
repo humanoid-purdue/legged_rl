@@ -31,10 +31,10 @@ def makeIFN():
     make_inference_fn_ = make_inference_fn(ppo_network)
     return make_inference_fn_
 
-command = jnp.array([0.4, 0.0, 0.2])
+command = jnp.array([0., 0.0, 0.])
 
-#dir = "training/nemo_full"
-dir = ""
+dir = "training/nemo_full"
+#dir = ""
 
 model_path = dir + "/walk_policy"
 saved_params = model.load_params(model_path)

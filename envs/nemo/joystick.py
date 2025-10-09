@@ -32,7 +32,7 @@ from models.nemo import constants as consts
 
 episode_length = 500
 
-MAX_LEN = 100
+MAX_LEN = 50
 
 def default_config() -> config_dict.ConfigDict:
   return config_dict.create(
@@ -434,7 +434,7 @@ class Joystick(base.NEMOEnv):
     state.info["phase"] = jp.where(
         jp.linalg.norm(state.info["command"]) > 0.01,
         state.info["phase"],
-        jp.ones(2) * jp.pi,
+        jp.array([0.0, jp.pi]),
     )
     state.info["last_last_act"] = state.info["last_act"]
     state.info["last_act"] = action
