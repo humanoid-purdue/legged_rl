@@ -24,16 +24,16 @@ def makeIFN():
     # normalize = running_statistics.normalize
     #normalize = lambda x, y: x
     normalize = running_statistics.normalize
-    obs_size = 67 * 100#env.observation_size
+    obs_size = 67 * 50#env.observation_size
     ppo_network = network_factory(
         obs_size, env.action_size, preprocess_observations_fn=normalize
     )
     make_inference_fn_ = make_inference_fn(ppo_network)
     return make_inference_fn_
 
-command = jnp.array([0., 0.0, 0.])
+command = jnp.array([0.4, 0.0, 0.2])
 
-dir = "training/nemo_full"
+dir = "training/nemo_full_50"
 #dir = ""
 
 model_path = dir + "/walk_policy"

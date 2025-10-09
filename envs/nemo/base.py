@@ -82,7 +82,7 @@ class NEMOEnv(mjx_env.MjxEnv):
     super().__init__(config, config_overrides)
 
     self._mj_model = mujoco.MjModel.from_xml_path(
-            "models/nemo/scene.xml"
+            xml_path
         )
     self._mj_model.opt.timestep = self.sim_dt
 

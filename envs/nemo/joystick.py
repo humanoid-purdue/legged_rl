@@ -145,15 +145,12 @@ class Joystick(base.NEMOEnv):
 
   def __init__(
       self,
-      task: str = "flat_terrain",
+      xml_path: str = "models/nemo/scene.xml",
       config: config_dict.ConfigDict = default_config(),
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
   ):
-    if task.startswith("rough"):
-      config.nconmax = 100 * 8192
-      config.njmax = 500
     super().__init__(
-        xml_path=None,
+        xml_path=xml_path,
         config=config,
         config_overrides=config_overrides,
     )

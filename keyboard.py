@@ -17,7 +17,7 @@ from envs.nemo.joystick import rl_config as ppo_params
 from networks.ts_networks import make_ppo_networks, make_inference_fn
 
 # Environment and network setup (mirrors visualize_pipeline.py)
-env = joystick.Joystick()
+env = joystick.Joystick(xml_path="models/nemo/flat_scene.xml")
 jit_reset = jax.jit(env.reset)
 jit_step = jax.jit(env.step)
 state = jit_reset(jax.random.PRNGKey(0))
@@ -31,7 +31,7 @@ def makeIFN():
     )
     normalize = running_statistics.normalize
     # Match obs size heuristic used in visualize_pipeline
-    obs_size = 67 * 100  # env.observation_size
+    obs_size = 67 * 50  # env.observation_size
     ppo_network = network_factory(
         obs_size, env.action_size, preprocess_observations_fn=normalize
     )
@@ -39,8 +39,9 @@ def makeIFN():
 
 
 # Load policy parameters
-dir = "training/nemo_full"
-model_path = dir + "/walk_policy"
+#dir = "training/nemo_full_50"
+#model_path = dir + "/walk_policy"
+model_path = "walk_policy"
 saved_params = model.load_params(model_path)
 
 inference_fn = makeIFN()(saved_params)
@@ -51,16 +52,18 @@ pressed: Set[str] = set()
 pressed_lock = threading.Lock()
 exit_flag = threading.Event()
 
-FWD_SPEED = 0.4  # m/s
+FWD_SPEED = 0.5  # m/s
+LAT_SPEED = 0.3  # m/s on y axis (index 1)
 YAW_SPEED = 0.7  # rad/s
 
 
 def compute_command():
     with pressed_lock:
         f = (('w' in pressed) - ('s' in pressed)) * FWD_SPEED  # forward/back
+        lat = (('q' in pressed) - ('e' in pressed)) * LAT_SPEED  # left/right strafe
         yaw = (('a' in pressed) - ('d' in pressed)) * YAW_SPEED  # left/right yaw
-    # Command vector assumed as [forward, lateral(0), yaw]
-    return jnp.array([f, 0.0, yaw], dtype=jnp.float32)
+    # Command vector: [forward (x), lateral (y), yaw]
+    return jnp.array([f, lat, yaw], dtype=jnp.float32)
 
 
 def on_press(key):
@@ -70,7 +73,7 @@ def on_press(key):
         if key == keyboard.Key.esc:
             exit_flag.set()
         return
-    if k in ('w', 'a', 's', 'd'):
+    if k in ('w', 'a', 's', 'd', 'q', 'e'):
         with pressed_lock:
             pressed.add(k)
 
@@ -80,7 +83,7 @@ def on_release(key):
         k = key.char.lower()
     except AttributeError:
         return
-    if k in ('w', 'a', 's', 'd'):
+    if k in ('w', 'a', 's', 'd', 'q', 'e'):
         with pressed_lock:
             pressed.discard(k)
 
@@ -90,7 +93,7 @@ def main():
     rng = jax.random.PRNGKey(0)
 
     # Setup MuJoCo viewer using underlying xml scene
-    mj_model = mujoco.MjModel.from_xml_path('models/nemo/scene.xml')
+    mj_model = mujoco.MjModel.from_xml_path('models/nemo/flat_scene.xml')
     data = mujoco.MjData(mj_model)
     init_qpos = mj_model.keyframe('home').qpos
     data.qpos = init_qpos
@@ -99,7 +102,7 @@ def main():
     listener.start()
 
     viewer = mujoco.viewer.launch_passive(mj_model, data)
-    print("Keyboard control active. Use W/S for forward/back, A/D for yaw, ESC to quit.")
+    print("Keyboard: W/S forward/back (±0.4 m/s), Q/E strafe left/right (±0.3 m/s), A/D yaw (±0.7 rad/s), ESC to quit.")
 
     try:
         while not exit_flag.is_set():
