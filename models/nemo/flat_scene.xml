@@ -16,7 +16,7 @@
   </asset>
 
   <worldbody>
-    <geom name="floor" pos="0 0 0.05" size="0 0 0.01" type="plane" material="groundplane" contype="1" conaffinity="2" condim="3" friction=".6"/>
+    <geom name="floor" pos="0 0 0.0" size="0 0 0.01" type="plane" material="groundplane" contype="1" conaffinity="2" condim="3" friction=".6"/>
   </worldbody>
   <include file="sensor.xml"/>
 </mujoco>

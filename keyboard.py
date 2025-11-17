@@ -21,9 +21,13 @@ env = joystick.Joystick(xml_path="models/nemo/flat_scene.xml")
 jit_reset = jax.jit(env.reset)
 jit_step = jax.jit(env.step)
 state = jit_reset(jax.random.PRNGKey(0))
-
+mj_model = mujoco.MjModel.from_xml_path('models/nemo/flat_scene.xml')
+init_qpos = mj_model.keyframe('home').qpos
+state = state.replace(data = state.data.replace(qpos = init_qpos))
+#data.qpos = init_qpos
 
 def makeIFN():
+
     import functools
     network_factory = functools.partial(
         make_ppo_networks,
@@ -39,9 +43,9 @@ def makeIFN():
 
 
 # Load policy parameters
-#dir = "training/nemo_full_50"
-#model_path = dir + "/walk_policy"
-model_path = "walk_policy"
+dir = "training/nemo_trans_low_pd"
+model_path = dir + "/walk_policy"
+#model_path = "walk_policy"
 saved_params = model.load_params(model_path)
 
 inference_fn = makeIFN()(saved_params)
