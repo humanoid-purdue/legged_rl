@@ -66,7 +66,7 @@ def default_config() -> config_dict.ConfigDict:
               base_height=0.0,
               # Energy related rewards.
               torques=0.0,
-              action_rate=-0.005,
+              action_rate=-0.02,
               energy=0.0,
               dof_acc=-1e-7,
               dof_vel=-1e-6,
@@ -120,7 +120,7 @@ rl_config = config_dict.create(
       num_updates_per_batch=4,
       discounting=0.97,
       learning_rate=3e-4,
-      entropy_cost=0.001,
+      entropy_cost=0.005,
       num_envs=8192,
       batch_size=256,
       clipping_epsilon=0.2,
