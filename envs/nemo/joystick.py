@@ -109,7 +109,7 @@ def default_config() -> config_dict.ConfigDict:
   )
 
 rl_config = config_dict.create(
-      num_timesteps=200_000_000,
+      num_timesteps=300_000_000,
       num_evals=10,
       reward_scaling=1.0,
       episode_length=episode_length,
@@ -119,7 +119,7 @@ rl_config = config_dict.create(
       num_minibatches=32,
       num_updates_per_batch=4,
       discounting=0.97,
-      learning_rate=3e-4,
+      learning_rate=2e-4,
       entropy_cost=0.005,
       num_envs=8192,
       batch_size=256,
