@@ -109,7 +109,7 @@ def default_config() -> config_dict.ConfigDict:
   )
 
 rl_config = config_dict.create(
-      num_timesteps=300_000_000,
+      num_timesteps=200_000_000,
       num_evals=10,
       reward_scaling=1.0,
       episode_length=episode_length,
