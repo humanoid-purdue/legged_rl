@@ -1,0 +1,49 @@
+# Python environment for NEMO policy training.
+#   uv sync                     # CPU (laptop, CI)
+#   uv sync --extra gpu         # NVIDIA GPU on Linux (cluster, Colab)
+#   uv run pytest               # fast tests;  uv run pytest -m slow  for the training smoke test
+#
+# Versions are pinned to the late-2025 releases this code was written against.
+# Newer mujoco-mjx (3.4+) removed `nconmax` from mjx.make_data, which envs/nemo/base.py
+# still passes. Upgrade deliberately, in its own PR, with the smoke test green.
+
+[project]
+name = "legged-rl"
+version = "0.1.0"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+  "jax==0.8.0",
+  "jaxlib==0.8.0",
+  "brax==0.13.0",
+  "flax",
+  "mujoco==3.3.7",
+  "mujoco-mjx==3.3.7",
+  "playground==0.0.5",
+  "ml-collections",
+  "matplotlib",
+  "mediapy",
+  "etils",
+]
+
+[project.optional-dependencies]
+gpu = ["jax[cuda12]==0.8.0; sys_platform == 'linux'"]
+
+[dependency-groups]
+dev = ["pytest", "ruff"]
+teleop = ["pynput"]
+
+[tool.uv]
+package = false
+default-groups = ["dev"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = [
+  "slow: CPU PPO training smoke test (a few minutes)",
+  "contract: needs a prairie-ros-sim checkout (PRAIRIE_ROS_SIM env var)",
+]
+addopts = "-m 'not slow and not contract'"
+
+[tool.ruff]
+target-version = "py311"
