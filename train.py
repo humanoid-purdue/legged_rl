@@ -56,8 +56,8 @@ def progress(num_steps, metrics):
   # print progress (for Colab)
   print(
     f"Steps: {num_steps:,} / {ppo_params['num_timesteps']:,} | "
-    f"Reward: {reward:.3f}",
-    flush=True
+    f"Reward: {metrics["eval/episode_reward"]:.3f}",
+    flush=True,
   )
 
   plt.xlim([0, ppo_params["num_timesteps"] * 1.25])
@@ -77,11 +77,13 @@ if "network_factory" in ppo_params:
   )
 
 train_fn = functools.partial(
-    ppo.train, **dict(ppo_training_params),
+    ppo.train, 
+    **dict(ppo_training_params),
     network_factory=network_factory,
     randomization_fn = domain_randomize,
     progress_fn=progress,
     seed=args.seed,
+    save_checkpoint_path=os.path.join(out_dir, "checkpoints"),
 )
 
 make_inference_fn, params, metrics = train_fn(
