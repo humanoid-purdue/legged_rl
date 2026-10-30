@@ -53,6 +53,13 @@ def progress(num_steps, metrics):
   y_data.append(metrics["eval/episode_reward"])
   y_dataerr.append(metrics["eval/episode_reward_std"])
 
+  # print progress (for Colab)
+  print(
+    f"Steps: {num_steps:,} / {ppo_params['num_timesteps']:,} | "
+    f"Reward: {reward:.3f}",
+    flush=True
+  )
+
   plt.xlim([0, ppo_params["num_timesteps"] * 1.25])
   plt.xlabel("# environment steps")
   plt.ylabel("reward per episode")
