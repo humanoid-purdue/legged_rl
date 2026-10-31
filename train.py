@@ -20,6 +20,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--seed", type=int, default=0)
 parser.add_argument("--out_dir", default=None,
                     help="defaults to training/<timestamp>_seed<seed>")
+parser.add_argument("--restore", type=str, default=None,
+                    help="path to a PPO training checkpoint for restarting training")
+parser.add_argument("--num_timesteps", type=int, default=None, help="number of environment steps")    # Useful when restarting from checkpoint
 args = parser.parse_args()
 
 run_start = datetime.now()
@@ -36,12 +39,14 @@ def git_info():
   except (subprocess.CalledProcessError, FileNotFoundError):
     return {"commit": None, "dirty": None}
 
+# Allow for a custom number of timesteps
+if args.num_timesteps is not None:
+    ppo_params["num_timesteps"] = args.num_timesteps
 
 env_cfg = joystick.default_config()
 env = joystick.Joystick(config=env_cfg)
 eval_env = joystick.Joystick(config=env_cfg)
 ppo_training_params = dict(ppo_params)
-
 
 x_data, y_data, y_dataerr = [], [], []
 times = [datetime.now()]
@@ -84,6 +89,7 @@ train_fn = functools.partial(
     progress_fn=progress,
     seed=args.seed,
     save_checkpoint_path=os.path.join(out_dir, "checkpoints"),
+    restore_checkpoint_path=args.restore,
 )
 
 make_inference_fn, params, metrics = train_fn(
