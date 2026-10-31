@@ -26,10 +26,17 @@ parser.add_argument("--num_timesteps", type=int, default=None, help="number of e
 args = parser.parse_args()
 
 run_start = datetime.now()
-out_dir = args.out_dir or os.path.join(
+out_dir = os.path.abspath(
+  args.out_dir or os.path.join(
     "training", f"{run_start:%Y%m%d_%H%M%S}_seed{args.seed}")
+    )
 os.makedirs(out_dir, exist_ok=True)
 
+restore_checkpoint = (
+    os.path.abspath(os.path.expanduser(args.restore))
+    if args.restore
+    else None
+)
 
 def git_info():
   try:
@@ -89,7 +96,7 @@ train_fn = functools.partial(
     progress_fn=progress,
     seed=args.seed,
     save_checkpoint_path=os.path.join(out_dir, "checkpoints"),
-    restore_checkpoint_path=args.restore,
+    restore_checkpoint_path=restore_checkpoint,
 )
 
 make_inference_fn, params, metrics = train_fn(
