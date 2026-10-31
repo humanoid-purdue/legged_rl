@@ -61,7 +61,7 @@ def progress(num_steps, metrics):
   # print progress (for Colab)
   print(
     f"Steps: {num_steps:,} / {ppo_params['num_timesteps']:,} | "
-    f"Reward: {metrics["eval/episode_reward"]:.3f}",
+    f"Reward: {metrics['eval/episode_reward']:.3f}",
     flush=True,
   )
 
