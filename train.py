@@ -20,13 +20,23 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--seed", type=int, default=0)
 parser.add_argument("--out_dir", default=None,
                     help="defaults to training/<timestamp>_seed<seed>")
+parser.add_argument("--restore", type=str, default=None,
+                    help="path to a PPO training checkpoint for restarting training")
+parser.add_argument("--num_timesteps", type=int, default=None, help="number of environment steps")    # Useful when restarting from checkpoint
 args = parser.parse_args()
 
 run_start = datetime.now()
-out_dir = args.out_dir or os.path.join(
+out_dir = os.path.abspath(
+  args.out_dir or os.path.join(
     "training", f"{run_start:%Y%m%d_%H%M%S}_seed{args.seed}")
+    )
 os.makedirs(out_dir, exist_ok=True)
 
+restore_checkpoint = (
+    os.path.abspath(os.path.expanduser(args.restore))
+    if args.restore
+    else None
+)
 
 def git_info():
   try:
@@ -36,12 +46,14 @@ def git_info():
   except (subprocess.CalledProcessError, FileNotFoundError):
     return {"commit": None, "dirty": None}
 
+# Allow for a custom number of timesteps
+if args.num_timesteps is not None:
+    ppo_params["num_timesteps"] = args.num_timesteps
 
 env_cfg = joystick.default_config()
 env = joystick.Joystick(config=env_cfg)
 eval_env = joystick.Joystick(config=env_cfg)
 ppo_training_params = dict(ppo_params)
-
 
 x_data, y_data, y_dataerr = [], [], []
 times = [datetime.now()]
@@ -52,6 +64,13 @@ def progress(num_steps, metrics):
   x_data.append(num_steps)
   y_data.append(metrics["eval/episode_reward"])
   y_dataerr.append(metrics["eval/episode_reward_std"])
+
+  # print progress (for Colab)
+  print(
+    f"Steps: {num_steps:,} / {ppo_params['num_timesteps']:,} | "
+    f"Reward: {metrics['eval/episode_reward']:.3f}",
+    flush=True,
+  )
 
   plt.xlim([0, ppo_params["num_timesteps"] * 1.25])
   plt.xlabel("# environment steps")
@@ -70,11 +89,14 @@ if "network_factory" in ppo_params:
   )
 
 train_fn = functools.partial(
-    ppo.train, **dict(ppo_training_params),
+    ppo.train, 
+    **dict(ppo_training_params),
     network_factory=network_factory,
     randomization_fn = domain_randomize,
     progress_fn=progress,
     seed=args.seed,
+    save_checkpoint_path=os.path.join(out_dir, "checkpoints"),
+    restore_checkpoint_path=restore_checkpoint,
 )
 
 make_inference_fn, params, metrics = train_fn(
