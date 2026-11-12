@@ -36,6 +36,7 @@ On a Linux machine with an NVIDIA GPU, use `uv sync --extra gpu` instead.
 | `train.py` | Train locally |
 | `colab_train.py` | Training entry point for Colab |
 | `visualize_pipeline.py`, `keyboard.py` | Watch / drive a trained policy in the MuJoCo viewer |
+| `eval.py` | Run trained policy headlessly on fixed commands |
 
 ## Observation contract
 
